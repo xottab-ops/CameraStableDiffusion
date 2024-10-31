@@ -20,8 +20,8 @@ Processing a user's photo using Stable Diffusion and sending the image to cloud 
     Credentials template:
    ```
     [default]
-      aws_access_key_id = <идентификатор_статического_ключа>
-      aws_secret_access_key = <секретный_ключ>
+      aws_access_key_id = <<Static Key Identificator>>
+      aws_secret_access_key = <Secret Key>
       region=ru-central1
    ```
 3. Clone the repo
