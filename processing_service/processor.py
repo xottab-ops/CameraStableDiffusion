@@ -3,7 +3,7 @@ from PIL import Image
 from io import BytesIO
 from logger.logger import log_error
 
-#'http://10.61.36.18:7860/'
+
 def process_image(file_path, stable_diffusion_url):
     try:
         with open(file_path, "rb") as file:

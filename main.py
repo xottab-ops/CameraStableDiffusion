@@ -1,4 +1,5 @@
 import tkinter as tk
+import ttkbootstrap as ttk
 import uuid
 from tkinter import Toplevel
 import cv2
@@ -18,6 +19,7 @@ class CameraApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Фотосъемка")
+        self.root.configure(bg="#2c3e50")
 
         self.settings_filename = "settings.ini"
         self.s3_endpoint = ""
@@ -29,16 +31,15 @@ class CameraApp:
         os.makedirs(self.original_photo_dir, exist_ok=True)
         os.makedirs(self.edited_photo_dir, exist_ok=True)
 
-        self.capture_button = tk.Button(root, text="Сделать фото", command=self.take_photo)
-        self.capture_button.pack(pady=10)
+        self.capture_button = ttk.Button(root, text="Сделать фото", command=self.take_photo)
 
-        self.retake_button = tk.Button(root, text="Перефотографировать", command=self.reset)
-        self.save_button = tk.Button(root, text="Сохранить", command=self.save_photo)
+        self.retake_button = ttk.Button(root, text="Перефотографировать", command=self.reset)
+        self.save_button = ttk.Button(root, text="Сохранить", command=self.save_photo)
 
         self.label = tk.Label(root)
         self.label.pack(pady=10)
-
         self.camera = cv2.VideoCapture(0)
+        self.capture_button.pack(pady=10)
         self.photo = None
         self.showing_photo = False
 
@@ -72,6 +73,9 @@ class CameraApp:
             if ret:
                 img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 img = Image.fromarray(img)
+
+                img = img.resize((int(800 * img.width / img.height), 800), Image.LANCZOS)
+
                 img = ImageTk.PhotoImage(img)
                 self.label.config(image=img)
                 self.label.image = img
@@ -80,6 +84,7 @@ class CameraApp:
     def take_photo(self):
         self.capture_button.config(state=tk.DISABLED)
         threading.Thread(target=self.capture_with_delay).start()
+        self.capture_button.pack_forget()
 
     def capture_with_delay(self):
         time.sleep(3)
@@ -88,7 +93,9 @@ class CameraApp:
             self.photo = frame
             img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             img = Image.fromarray(img)
+            img = img.resize((int(800 * img.width / img.height), 800), Image.LANCZOS)
             img = ImageTk.PhotoImage(img)
+
             self.label.config(image=img)
             self.label.image = img
 
@@ -103,6 +110,7 @@ class CameraApp:
     def reset(self):
         self.retake_button.pack_forget()
         self.save_button.pack_forget()
+        self.capture_button.pack(pady=10)
         self.photo = None
         self.showing_photo = False
 
@@ -140,6 +148,7 @@ class CameraApp:
         self.camera.release()
 
 
-root = tk.Tk()
-app = CameraApp(root)
-root.mainloop()
+if __name__ == "__main__":
+    main_root = tk.Tk()
+    app = CameraApp(main_root)
+    main_root.mainloop()
