@@ -7,13 +7,11 @@ app = Flask(__name__)
 
 @app.route('/generate', methods=['POST'])
 def generate():
-    # Проверяем, что в запросе есть файл
     if 'file' not in request.files:
         return "No file provided", 400
 
     file = request.files['file']
 
-    # Открываем изображение для проверки и отдаем его обратно в формате JPEG
     try:
         image = Image.open(file)
         img_io = BytesIO()

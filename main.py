@@ -18,7 +18,7 @@ import sys
 class CameraApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Фотосъемка")
+        self.root.title("Stable Diffusion Camera")
         self.root.configure(bg="#2c3e50")
 
         self.settings_filename = "settings.ini"
@@ -31,10 +31,10 @@ class CameraApp:
         os.makedirs(self.original_photo_dir, exist_ok=True)
         os.makedirs(self.edited_photo_dir, exist_ok=True)
 
-        self.capture_button = ttk.Button(root, text="Сделать фото", command=self.take_photo)
+        self.capture_button = ttk.Button(root, text="Take a photo", command=self.take_photo)
 
-        self.retake_button = ttk.Button(root, text="Перефотографировать", command=self.reset)
-        self.save_button = ttk.Button(root, text="Сохранить", command=self.save_photo)
+        self.retake_button = ttk.Button(root, text="Re-photographing", command=self.reset)
+        self.save_button = ttk.Button(root, text="Create image from Stable Diffusion", command=self.save_photo)
 
         self.label = tk.Label(root)
         self.label.pack(pady=10)
@@ -49,7 +49,7 @@ class CameraApp:
         config = configparser.ConfigParser()
 
         if not os.path.exists(self.settings_filename):
-            log_error("Unable to read settings.ini", "Файл конфигурации не найден.")
+            log_error("Unable to read settings.ini", "Config file not found.")
             sys.exit(1)
 
         try:
@@ -62,10 +62,10 @@ class CameraApp:
             self.edited_photo_dir = config['DEFAULT']['EDITED_PHOTO_DIR']
         except configparser.Error as e:
             log_error("Unable to read settings.ini", str(e))
-            sys.exit(1)  # Завершение программы с кодом 1
+            sys.exit(1)
         except KeyError as e:
-            log_error("Missing configuration key", f"Отсутствует ключ: {e}")
-            sys.exit(1)  # Завершение программы с кодом 1
+            log_error("Missing configuration key", f"Key missing: {e}")
+            sys.exit(1)
 
     def update_preview(self):
         if not self.showing_photo:
@@ -104,7 +104,7 @@ class CameraApp:
 
             self.showing_photo = True
         else:
-            log_error("Ошибка", "Не удалось сделать фото")
+            log_error("Error", "Unable to create the image")
         self.capture_button.config(state=tk.NORMAL)
 
     def reset(self):
@@ -119,25 +119,25 @@ class CameraApp:
             photo_name = uuid.uuid4().hex + ".jpg"
             original_file_path = os.path.join(self.original_photo_dir, photo_name)
             cv2.imwrite(original_file_path, self.photo)
-            log_info("Фото сохранено", f"Фото сохранено как {original_file_path}")
+            log_info("Image saved", f"Image saved in {original_file_path}")
 
             edited_image = process_image(original_file_path, self.stable_diffusion_url)
 
             if edited_image:
                 edited_file_path = self.edited_photo_dir + "/" + photo_name
                 edited_image.save(edited_file_path)
-                log_info("Обработанное фото сохранено", f"Фото сохранено как {edited_file_path}")
+                log_info("The processed image is saved", f"Image saved in {edited_file_path}")
                 s3_url = upload_file_to_s3(edited_file_path, self.s3_bucket_name, self.s3_endpoint)
                 if s3_url:
                     self.show_qr_code(s3_url)
             self.reset()
         else:
-            log_error("Ошибка", "Нет фото для сохранения")
+            log_error("Error", "No image for save")
 
     def show_qr_code(self, url):
         qr_image = generate_qr_code(url)
         qr_window = Toplevel(self.root)
-        qr_window.title("QR-код для загрузки")
+        qr_window.title("QR Code for download image")
 
         img = ImageTk.PhotoImage(qr_image)
         qr_label = tk.Label(qr_window, image=img)
