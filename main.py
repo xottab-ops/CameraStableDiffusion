@@ -21,6 +21,74 @@ class CameraApp:
         self.root.title("Stable Diffusion Camera")
         self.root.configure(bg="#2c3e50")
 
+        self.batch_size = 2
+        self.payload = {
+            "prompt": "IT neon style, futuristic, high contrast, cyberpunk, high resolution, 4k",
+            "sampler": "Euler a",
+            "seed": 1,
+            "steps": 50,
+            "width": 512,
+            "height": 512,
+            "denoising_strength": 0.5,
+            "n_iter": 1,
+            "batch_size": self.batch_size
+        }
+        # self.payload = {
+        #     "prompt": "cyberpunk atmosphere, neon lights, futuristic cityscape, dark and rainy, high contrast, neon reflections on wet surfaces, sci-fi vibe",
+        #     "negative_prompt": "",
+        #     "seed": -1,
+        #     "subseed": -1,
+        #     "subseed_strength": 0,
+        #     "seed_resize_from_h": -1,
+        #     "seed_resize_from_w": -1,
+        #     "sampler_name": "string",
+        #     "batch_size": 1,
+        #     "n_iter": 1,
+        #     "steps": 50,
+        #     "cfg_scale": 7,
+        #     "width": 512,
+        #     "height": 512,
+        #     "restore_faces": "true",
+        #     "tiling": "true",
+        #     "do_not_save_samples": "false",
+        #     "do_not_save_grid": "false",
+        #     "eta": 0,
+        #     "denoising_strength": 0.75,
+        #     "s_min_uncond": 0,
+        #     "s_churn": 0,
+        #     "s_tmax": 0,
+        #     "s_tmin": 0,
+        #     "s_noise": 0,
+        #     "override_settings": {},
+        #     "override_settings_restore_afterwards": "true",
+        #     "refiner_checkpoint": "string",
+        #     "refiner_switch_at": 0,
+        #     "disable_extra_networks": "false",
+        #     "firstpass_image": "string",
+        #     "comments": {},
+        #     "resize_mode": 0,
+        #     "image_cfg_scale": 0,
+        #     "mask": "string",
+        #     "mask_blur_x": 4,
+        #     "mask_blur_y": 4,
+        #     "mask_blur": 0,
+        #     "mask_round": "true",
+        #     "inpainting_fill": 0,
+        #     "inpaint_full_res": "true",
+        #     "inpaint_full_res_padding": 0,
+        #     "inpainting_mask_invert": 0,
+        #     "initial_noise_multiplier": 0,
+        #     "latent_mask": "string",
+        #     "force_task_id": "string",
+        #     "sampler_index": "Euler",
+        #     "include_init_images": "false",
+        #     "script_name": "string",
+        #     "script_args": [],
+        #     "send_images": "true",
+        #     "save_images": "false",
+        #     "alwayson_scripts": {},
+        # }
+
         self.settings_filename = "settings.ini"
         self.s3_endpoint = ""
         self.s3_bucket_name = ""
@@ -118,18 +186,16 @@ class CameraApp:
         if self.photo is not None:
             photo_name = uuid.uuid4().hex + ".jpg"
             original_file_path = os.path.join(self.original_photo_dir, photo_name)
+            edited_file_path = self.edited_photo_dir + "/" + photo_name
             cv2.imwrite(original_file_path, self.photo)
             log_info("Image saved", f"Image saved in {original_file_path}")
 
-            edited_image = process_image(original_file_path, self.stable_diffusion_url)
+            process_image(original_file_path, edited_file_path, self.stable_diffusion_url, **self.payload)
 
-            if edited_image:
-                edited_file_path = self.edited_photo_dir + "/" + photo_name
-                edited_image.save(edited_file_path)
-                log_info("The processed image is saved", f"Image saved in {edited_file_path}")
-                s3_url = upload_file_to_s3(edited_file_path, self.s3_bucket_name, self.s3_endpoint)
-                if s3_url:
-                    self.show_qr_code(s3_url)
+            log_info("The processed image is saved", f"Image saved in {edited_file_path}")
+            s3_url = upload_file_to_s3(edited_file_path, self.s3_bucket_name, self.s3_endpoint)
+            if s3_url:
+                self.show_qr_code(s3_url)
             self.reset()
         else:
             log_error("Error", "No image for save")
